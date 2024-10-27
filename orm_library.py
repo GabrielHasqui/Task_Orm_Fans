@@ -1,4 +1,5 @@
 from library.models import Libro, Autor, AutorCapitulo, Editorial, LibroCronica
+from django.db.models import Min, Max, Avg, Count, Sum
 
 # sentencias orm 
 # Incercion basica de datos en la tabla Autor
@@ -123,11 +124,86 @@ print(libros)
 libros = Libro.objects.filter(paginas__lt=200).count()
 print(libros)
 
-# Consulta con or forma larga
+# Consulta con or forma larga 
 # Consultar los libros con 200 o 300 paginas
 libros1 = Libro.objects.filter(paginas=200)
 libros2 = Libro.objects.filter(paginas=300)
 consulta = (libros1 | libros2).values('titulo','paginas')
 print(consulta)
 
+# Consuta por fecha con el metodo year 
+# Consultar los libros que se publicaron en el 2021
+libros = Libro.objects.filter(fecha_publicacion__year=2021).values('titulo','fecha_publicacion')
+print(libros)
 
+# Filtrando con expreciones regulares con el metodo regex (pag 26)
+# Consultar cuyo isb comience con 19 seguido de 8 digitos
+libros = Libro.objects.filter(isbn__regex=r'^19\d{8}$').values('isbn')
+print(libros)
+
+# Consulta con union con el metodo union 
+# Consultar el nombre de los autores que contengan hill con las editoriales que contengan hill
+autores = Autor.objects.filter(nombre__icontains='hill').values('nombre')
+editoriales = Editorial.objects.filter(nombre__icontains='hill').values('nombre')
+union = autores.union(editoriales)
+print(union)
+
+# Consulta con con el metodo order_by 
+# Obtener el cuarto libro con mas paginas
+libro = Libro.objects.values("isbn","paginas").order_by("-paginas")[3]
+print(libro)
+
+#Obtener el cuarto y quinto libro con mas paginas
+libros = Libro.objects.values("isbn","paginas").order_by("-paginas")[3:5]
+print(libros)
+
+# Consulta por indice 
+libro = Libro.objects.filter(paginas__gt=200).explain()
+print(libro)
+
+# Consultas de agregacion y agrupacion
+# con las funciones Min, Max, Avg, Count, Sum
+# Consulta con la funcion Min
+# Consultar el numero minimo de paginas de los libros con la funcion Min
+libro = Libro.objects.filter(paginas__gt=0).aggregate(Min('paginas'))
+print(libro)
+
+# Consultar el numero maximo de paginas de los libros con la funcion Max
+libro = Libro.objects.filter(paginas__gt=0).aggregate(Max('paginas'))
+print(libro)
+
+# Consultar el numero promedio de paginas de los libros con la funcion Avg
+libro = Libro.objects.filter(paginas__gt=0).aggregate(Avg('paginas'))
+print(libro)
+
+# Consultar el numero total de paginas de los libros de python con la funcion Sum
+libro = Libro.objects.filter(categoria__icontains='python').aggregate(Sum('paginas'))
+print(libro)
+
+# Consultar el numero de libros con la funcion Count
+libro = Libro.objects.filter(paginas__gt=0).aggregate(Count('paginas'))
+print(libro)
+
+# Consulta con group by y annotate
+# Consultar los libros son de python por categoria y contar cuantos libro de cada categoria hay
+libros = Libro.objects.filter(categoria__contains
+ ='python').values('categoria').annotate(
+ NumeroLibros=Count('*')) 
+ 
+print(libros)
+
+# Consulta los libros que son de python por categoria y contar cuantos libro hay
+libro = Libro.objects.filter(categoria__icontains='python').values('categoria'
+ ,'editorial__nombre').annotate(NumeroLibros=Count('*'))  
+print(libro)
+
+# Consultas Having(filtrar agrupaciones)
+# Filtrar los libros por fecha de publicación y filtrar solo las que tengan más de 2 libros en esa fecha
+Consulta_fechas = Libro.objects.values('fecha_publicacion').annotate(cant_fec_pub=Count('fecha_publicacion')).filter(cant_fec_pub__gte=2).values_list('fecha_publicacion', flat=True)
+print(Consulta_fechas)
+
+# Para obtener el detalle de los libros que se publicaron en esas fechas
+Detalle_libros = Libro.objects.filter(fecha_publicacion__in=Consulta_fechas).values('isbn', 'fecha_publicacion')
+print(Detalle_libros)
+
+#Consultas con Distinct
