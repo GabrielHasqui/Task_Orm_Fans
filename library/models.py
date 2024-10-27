@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 
+#validador de titulo
 def validar_titulo(titulo):
     if 'cobol' in titulo:
         raise ValidationError(f'{titulo} no se vende mucho')
