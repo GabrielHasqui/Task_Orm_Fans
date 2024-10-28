@@ -228,4 +228,39 @@ print(libro)
 libros = Libro.objects.filter(titulo__exact=F('desc_corta')[:50])
 print(libros)
 
+# Consultas con Q
+#  Consultar los libros de categoria python o que tengan mas de 100 paginas
+libro = Libro.objects.filter( 
+(Q(categoria__contains='python') |  
+Q(categoria__contains='java') |  
+Q(categoria__contains='net')) &  
+~Q(paginas=100))
+print(libro) 
+
+#Consultas con left join
+# Consultar los libros con sus autores
+libros = Libro.objects.values('titulo','isbn','libros_autores__nombre')
+print(libros)
+
+#Consultar libros de python con sus editoriales
+libros = Libro.objects.filter(categoria__icontains='python').values('titulo','categoria','editorial__nombre')
+print(libros)
+
+# ahora utilizamos el metodo select_related
+libros = Libro.objects.filter(categoria__icontains='python').select_related('editorial').values('titulo','categoria','editorial__nombre')
+print(libros)
+
+# consultar 2 autores con sus libros 
+autores = Autor.objects.all().values('nombre','libro__titulo')
+print(autores)
+
+#consulta con prefetch_related  
+autores = Autor.objects.all().prefetch_related('libro').values('nombre','libro__titulo')
+print(autores)
+
+# listar cada uno de sus libros, pero ahora debemos mostrar el nombre de la editorial por cada uno de los libros 
+# con el metodo prefetch_related
+autores = Autor.objects.all().prefetch_related('libro__editorial').values('nombre','libro__titulo','libro__editorial__nombre')
+print(autores)
+
 
