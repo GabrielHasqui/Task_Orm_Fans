@@ -1,5 +1,8 @@
 from library.models import Libro, Autor, AutorCapitulo, Editorial, LibroCronica
 from django.db.models import Min, Max, Avg, Count, Sum
+from django.db.models.functions import Left
+from django.db.models.functions import Substr
+from django.db.models import F, Q
 
 # sentencias orm 
 # Incercion basica de datos en la tabla Autor
@@ -206,4 +209,23 @@ print(Consulta_fechas)
 Detalle_libros = Libro.objects.filter(fecha_publicacion__in=Consulta_fechas).values('isbn', 'fecha_publicacion')
 print(Detalle_libros)
 
-#Consultas con Distinct
+# Consultas con Distinct
+# El metodo distinct se utiliza para eliminar los registros duplicados de una consulta
+# Consultar las categorias de los libros sin repetir
+libros = Libro.objects.values('categoria').distinct()
+print(libros)
+
+# Consultas usando Substr
+# Anotamos cada libro con una descripción resumida que toma los primeros 15 caracteres de 'desc_corta'
+libro = Libro.objects.annotate(
+    desc_resumida=Substr('desc_corta', 1, 15)
+).values('isbn', 'desc_resumida')
+
+# Imprimimos el resultado de la consulta
+print(libro)
+
+# Este filtro encuentra libros cuyo título es exactamente igual a los primeros 50 caracteres de su descripción corta
+libros = Libro.objects.filter(titulo__exact=F('desc_corta')[:50])
+print(libros)
+
+
